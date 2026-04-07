@@ -77,30 +77,40 @@ namespace UnityTV.Gameplay
 
         private void SetupInteractionZones()
         {
+            // Find TV and Door objects if not assigned
+            GameObject tvObject = GameObject.FindGameObjectWithTag("TV");
+            GameObject doorObject = GameObject.FindGameObjectWithTag("Door");
+
             // TV interaction zone
-            if (tvInteractionZone == null)
+            if (tvInteractionZone == null && tvObject != null)
             {
                 GameObject tvZone = new GameObject("TV_InteractionZone");
-                tvZone.transform.position = new Vector3(0, -1, 0); // Adjust position
+                tvZone.transform.position = tvObject.transform.position;
+                tvZone.transform.SetParent(tvObject.transform);
                 tvInteractionZone = tvZone.AddComponent<BoxCollider2D>();
                 tvInteractionZone.isTrigger = true;
-                tvInteractionZone.size = new Vector2(3f, 2f);
+                tvInteractionZone.size = new Vector2(3f, 2.5f);
 
                 InteractionZone tvZoneScript = tvZone.AddComponent<InteractionZone>();
                 tvZoneScript.Initialize(InteractionType.TV, this);
+
+                Debug.Log("TV interaction zone created");
             }
 
             // Door interaction zone
-            if (doorInteractionZone == null)
+            if (doorInteractionZone == null && doorObject != null)
             {
                 GameObject doorZone = new GameObject("Door_InteractionZone");
-                doorZone.transform.position = new Vector3(-5, 0, 0); // Adjust position
+                doorZone.transform.position = doorObject.transform.position;
+                doorZone.transform.SetParent(doorObject.transform);
                 doorInteractionZone = doorZone.AddComponent<BoxCollider2D>();
                 doorInteractionZone.isTrigger = true;
-                doorInteractionZone.size = new Vector2(2f, 3f);
+                doorInteractionZone.size = new Vector2(2.5f, 3.5f);
 
                 InteractionZone doorZoneScript = doorZone.AddComponent<InteractionZone>();
                 doorZoneScript.Initialize(InteractionType.Door, this);
+
+                Debug.Log("Door interaction zone created");
             }
         }
 

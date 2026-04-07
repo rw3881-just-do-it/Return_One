@@ -28,7 +28,18 @@ namespace UnityTV.Core
             }
 
             Debug.Log($"Loading scene: {sceneName}");
-            GameManager.Instance.StartCoroutine(LoadSceneAsync(sceneName));
+
+            // Check if GameManager exists
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.StartCoroutine(LoadSceneAsync(sceneName));
+            }
+            else
+            {
+                // Fallback: Load scene directly without coroutine
+                Debug.LogWarning("GameManager not found, loading scene directly");
+                SceneManager.LoadScene(sceneName);
+            }
         }
 
         /// <summary>
@@ -43,7 +54,18 @@ namespace UnityTV.Core
             }
 
             Debug.Log($"Loading scene index: {sceneIndex}");
-            GameManager.Instance.StartCoroutine(LoadSceneAsync(sceneIndex));
+
+            // Check if GameManager exists
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.StartCoroutine(LoadSceneAsync(sceneIndex));
+            }
+            else
+            {
+                // Fallback: Load scene directly without coroutine
+                Debug.LogWarning("GameManager not found, loading scene directly");
+                SceneManager.LoadScene(sceneIndex);
+            }
         }
 
         /// <summary>

@@ -133,6 +133,14 @@ namespace UnityTV.Gameplay
         private void SelectChannel(int channelNumber)
         {
             Debug.Log($"Selected Channel {channelNumber}");
+
+            // Check if GameManager exists
+            if (GameManager.Instance == null)
+            {
+                Debug.LogError("GameManager not found! Cannot access player data.");
+                return;
+            }
+
             currentChannel = channelNumber;
 
             // Channel 6 is special - goes to combat scene
@@ -271,6 +279,14 @@ namespace UnityTV.Gameplay
         private void ExitTV()
         {
             Debug.Log("Exiting TV");
+
+            // Check if GameManager exists
+            if (GameManager.Instance == null)
+            {
+                Debug.LogError("GameManager not found! Loading Living Room directly.");
+                SceneController.LoadScene("02_LivingRoom");
+                return;
+            }
 
             // Return to living room
             GameManager.Instance.ExitTVMode();

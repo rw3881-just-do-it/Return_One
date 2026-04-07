@@ -260,7 +260,7 @@ namespace UnityTV.Gameplay
 
         private void ReturnToLivingRoom()
         {
-            SceneController.LoadScene("StartScene"); // 返回主场景
+            SceneController.LoadScene("02_LivingRoom"); // Changed from "StartScene"
         }
 
         // Optional: Allow clicking anywhere to advance
