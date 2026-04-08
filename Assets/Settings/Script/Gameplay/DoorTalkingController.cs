@@ -260,7 +260,8 @@ namespace UnityTV.Gameplay
 
         private void ReturnToLivingRoom()
         {
-            SceneController.LoadScene("02_LivingRoom"); // Changed from "StartScene"
+            Debug.Log("[DoorTalking] Returning to Living Room");
+            SceneController.LoadScene("02_LivingRoom");
         }
 
         // Optional: Allow clicking anywhere to advance

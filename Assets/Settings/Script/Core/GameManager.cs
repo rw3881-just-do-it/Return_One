@@ -46,12 +46,26 @@ namespace UnityTV.Core
             DontDestroyOnLoad(gameObject);
 
             InitializeManagers();
+
+            Log("GameManager initialized");
         }
 
         private void Start()
         {
-            // Initialize game
-            ChangeGameState(GameState.MainMenu);
+            // IMPORTANT: Only initialize game state if we're in the main menu
+            // This prevents the GameManager from interfering when testing individual scenes
+            string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+
+            if (currentScene == "00_MainMenu")
+            {
+                ChangeGameState(GameState.MainMenu);
+                Log("Starting from Main Menu");
+            }
+            else
+            {
+                // We're in a different scene (probably testing), just set state to match
+                Log($"GameManager loaded in scene: {currentScene}, not changing state");
+            }
         }
 
         private void InitializeManagers()
@@ -105,31 +119,48 @@ namespace UnityTV.Core
 
         private void OnEnterState(GameState state)
         {
+            // Get current active scene name
+            string currentSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+
             switch (state)
             {
                 case GameState.MainMenu:
-                    SceneController.LoadScene("00_MainMenu");
+                    // Only load main menu if we're not already there
+                    if (currentSceneName != "00_MainMenu")
+                    {
+                        SceneController.LoadScene("00_MainMenu");
+                    }
                     AudioManager?.PlayMusic("MainMenuTheme");
                     break;
 
                 case GameState.CharacterCreation:
-                    SceneController.LoadScene("01_CharacterCreation");
+                    if (currentSceneName != "01_CharacterCreation")
+                    {
+                        SceneController.LoadScene("01_CharacterCreation");
+                    }
                     AudioManager?.PlayMusic("CharacterCreationTheme");
                     break;
 
                 case GameState.LivingRoom:
-                    SceneController.LoadScene("02_LivingRoom");
+                    if (currentSceneName != "02_LivingRoom")
+                    {
+                        SceneController.LoadScene("02_LivingRoom");
+                    }
                     AudioManager?.PlayMusic("LivingRoomAmbience");
                     TimeManager?.ResumeTime();
                     break;
 
                 case GameState.WatchingTV:
-                    SceneController.LoadScene("03_TVInterface");
+                    if (currentSceneName != "04_TVInterface")
+                    {
+                        SceneController.LoadScene("04_TVInterface");
+                    }
                     AudioManager?.PlayMusic("TVStaticNoise");
                     break;
 
                 case GameState.Combat:
-                    SceneController.LoadScene("04_ChannelVI_Combat");
+                    // TODO: Create combat scene
+                    // SceneController.LoadScene("05_Combat");
                     AudioManager?.PlayMusic("CombatTheme");
                     break;
 
@@ -205,10 +236,12 @@ namespace UnityTV.Core
             if (currentState != GameState.WatchingTV)
             {
                 Debug.LogWarning("Not currently watching TV!");
-                return;
             }
 
-            ChangeGameState(GameState.LivingRoom);
+            // Just load the living room scene, don't change game state
+            SceneController.LoadScene("02_LivingRoom");
+
+            Log("Exited TV mode, returning to living room");
         }
 
         /// <summary>

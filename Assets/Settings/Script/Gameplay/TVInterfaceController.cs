@@ -40,8 +40,48 @@ namespace UnityTV.Gameplay
 
         private void Start()
         {
+            Debug.Log("[TVInterface] Initializing...");
+
+            // Check if GameManager exists
+            if (GameManager.Instance == null)
+            {
+                Debug.LogWarning("[TVInterface] GameManager not found! Creating one for testing...");
+                GameObject gmObject = new GameObject("GameManager");
+                gmObject.AddComponent<GameManager>();
+
+                // Wait for initialization
+                Invoke(nameof(DelayedStart), 0.1f);
+                return;
+            }
+
             InitializeUI();
             SetupChannelButtons();
+            Debug.Log("[TVInterface] Initialization complete!");
+        }
+
+        private void DelayedStart()
+        {
+            if (GameManager.Instance != null && GameManager.Instance.PlayerData == null)
+            {
+                // Create test player data
+                var testData = new UnityTV.Player.PlayerData();
+                testData.PlayerName = "Test Player";
+                testData.InitializeFromQuestionnaire(
+                    "Test Player",
+                    UnityTV.Player.CareerType.Doctor,
+                    UnityTV.Player.HousingType.QuietHome,
+                    UnityTV.Player.FearType.Darkness,
+                    false
+                );
+                // Don't complete character creation, just assign data directly
+                typeof(GameManager).GetField("PlayerData",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public)
+                    ?.SetValue(GameManager.Instance, testData);
+
+                Debug.Log("[TVInterface] Created test player data");
+            }
+
+            Start(); // Call Start again
         }
 
         private void Update()
@@ -55,79 +95,151 @@ namespace UnityTV.Gameplay
         private void InitializeUI()
         {
             // Show channel selection, hide watching panel
-            if (channelSelectionPanel) channelSelectionPanel.SetActive(true);
-            if (watchingPanel) watchingPanel.SetActive(false);
+            if (channelSelectionPanel)
+            {
+                channelSelectionPanel.SetActive(true);
+                Debug.Log("[TVInterface] Channel selection panel shown");
+            }
+            else
+            {
+                Debug.LogError("[TVInterface] Channel selection panel is not assigned!");
+            }
+
+            if (watchingPanel)
+            {
+                watchingPanel.SetActive(false);
+            }
+            else
+            {
+                Debug.LogWarning("[TVInterface] Watching panel is not assigned!");
+            }
 
             // Setup exit button
             if (exitButton)
             {
+                exitButton.onClick.RemoveAllListeners(); // Clear old listeners
                 exitButton.onClick.AddListener(ExitTV);
+                Debug.Log("[TVInterface] Exit button configured");
+            }
+            else
+            {
+                Debug.LogError("[TVInterface] Exit button is not assigned!");
             }
         }
 
         private void SetupChannelButtons()
         {
+            Debug.Log("[TVInterface] Setting up channel buttons...");
+
             // Channel 1 - Medical (Doctor career)
             if (channel1Button)
             {
+                channel1Button.onClick.RemoveAllListeners();
                 channel1Button.onClick.AddListener(() => SelectChannel(1));
                 channel1Button.interactable = IsChannelUnlocked(1);
+                Debug.Log($"[TVInterface] Channel 1 configured. Unlocked: {IsChannelUnlocked(1)}");
+            }
+            else
+            {
+                Debug.LogError("[TVInterface] Channel 1 button not assigned!");
             }
 
             // Channel 2 - Police
             if (channel2Button)
             {
+                channel2Button.onClick.RemoveAllListeners();
                 channel2Button.onClick.AddListener(() => SelectChannel(2));
                 channel2Button.interactable = IsChannelUnlocked(2);
+                Debug.Log($"[TVInterface] Channel 2 configured. Unlocked: {IsChannelUnlocked(2)}");
+            }
+            else
+            {
+                Debug.LogError("[TVInterface] Channel 2 button not assigned!");
             }
 
             // Channel 3 - Office
             if (channel3Button)
             {
+                channel3Button.onClick.RemoveAllListeners();
                 channel3Button.onClick.AddListener(() => SelectChannel(3));
                 channel3Button.interactable = IsChannelUnlocked(3);
+                Debug.Log($"[TVInterface] Channel 3 configured. Unlocked: {IsChannelUnlocked(3)}");
+            }
+            else
+            {
+                Debug.LogError("[TVInterface] Channel 3 button not assigned!");
             }
 
             // Channel 4 - Merchant
             if (channel4Button)
             {
+                channel4Button.onClick.RemoveAllListeners();
                 channel4Button.onClick.AddListener(() => SelectChannel(4));
                 channel4Button.interactable = IsChannelUnlocked(4);
+                Debug.Log($"[TVInterface] Channel 4 configured. Unlocked: {IsChannelUnlocked(4)}");
+            }
+            else
+            {
+                Debug.LogError("[TVInterface] Channel 4 button not assigned!");
             }
 
             // Channel 5 - Scientist (locked in first playthrough)
             if (channel5Button)
             {
+                channel5Button.onClick.RemoveAllListeners();
                 channel5Button.onClick.AddListener(() => SelectChannel(5));
                 channel5Button.interactable = IsChannelUnlocked(5);
+                Debug.Log($"[TVInterface] Channel 5 configured. Unlocked: {IsChannelUnlocked(5)}");
+            }
+            else
+            {
+                Debug.LogError("[TVInterface] Channel 5 button not assigned!");
             }
 
             // Channel 6 - Combat (unlocked after Anchilo)
             if (channel6Button)
             {
+                channel6Button.onClick.RemoveAllListeners();
                 channel6Button.onClick.AddListener(() => SelectChannel(6));
                 channel6Button.interactable = IsChannelUnlocked(6);
+                Debug.Log($"[TVInterface] Channel 6 configured. Unlocked: {IsChannelUnlocked(6)}");
             }
+            else
+            {
+                Debug.LogError("[TVInterface] Channel 6 button not assigned!");
+            }
+
+            Debug.Log("[TVInterface] All channel buttons setup complete!");
         }
 
         private bool IsChannelUnlocked(int channelNumber)
         {
-            if (GameManager.Instance?.PlayerData == null) return false;
+            // For testing: if no GameManager, unlock all channels
+            if (GameManager.Instance?.PlayerData == null)
+            {
+                Debug.LogWarning($"[TVInterface] No GameManager/PlayerData - unlocking channel {channelNumber} for testing");
+                return true; // Allow all channels when testing individual scene
+            }
 
             // Channel 6 is special - unlocked after Anchilo
             if (channelNumber == 6)
             {
-                return GameManager.Instance.PlayerData.Channel6Unlocked;
+                bool unlocked = GameManager.Instance.PlayerData.Channel6Unlocked;
+                Debug.Log($"[TVInterface] Channel 6 unlock status: {unlocked}");
+                return unlocked;
             }
 
             // Channel 5 locked in first playthrough
             if (channelNumber == 5)
             {
                 // TODO: Check if player completed first playthrough
+                Debug.Log("[TVInterface] Channel 5 locked (first playthrough)");
                 return false;
             }
 
-            return GameManager.Instance.PlayerData.UnlockedChannels.Contains(channelNumber);
+            bool isUnlocked = GameManager.Instance.PlayerData.UnlockedChannels.Contains(channelNumber);
+            Debug.Log($"[TVInterface] Channel {channelNumber} unlock status: {isUnlocked}");
+            return isUnlocked;
         }
 
         private void SelectChannel(int channelNumber)
@@ -278,18 +390,10 @@ namespace UnityTV.Gameplay
 
         private void ExitTV()
         {
-            Debug.Log("Exiting TV");
+            Debug.Log("[TVInterface] Exiting TV - returning to Living Room");
 
-            // Check if GameManager exists
-            if (GameManager.Instance == null)
-            {
-                Debug.LogError("GameManager not found! Loading Living Room directly.");
-                SceneController.LoadScene("02_LivingRoom");
-                return;
-            }
-
-            // Return to living room
-            GameManager.Instance.ExitTVMode();
+            // Always return directly to living room
+            SceneController.LoadScene("02_LivingRoom");
         }
 
         // Quick channel selection with number keys

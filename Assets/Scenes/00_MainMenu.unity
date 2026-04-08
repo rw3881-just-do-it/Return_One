@@ -776,6 +776,99 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 929789025}
   m_CullTransparentMesh: 1
+--- !u!1 &952664269
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 952664270}
+  - component: {fileID: 952664274}
+  - component: {fileID: 952664273}
+  - component: {fileID: 952664272}
+  - component: {fileID: 952664271}
+  m_Layer: 0
+  m_Name: GameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &952664270
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 952664269}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.56678, y: -0.55094, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &952664271
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 952664269}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4635a391c15446b42a03e5bb5ef50312, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnityTV.Core.SaveLoadManager
+--- !u!114 &952664272
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 952664269}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67b90c95ad802ef4e82e9488707b5578, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnityTV.Core.AudioManager
+  musicSource: {fileID: 0}
+  sfxSource: {fileID: 0}
+  musicVolume: 0.7
+  sfxVolume: 1
+--- !u!114 &952664273
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 952664269}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e662132399f79d45911b5a70958652b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnityTV.Core.TimeManager
+  secondsPerTimeBlock: 120
+  timePaused: 0
+  currentDay: 1
+  currentTimeOfDay: 0
+--- !u!114 &952664274
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 952664269}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33b554671e9154541a636350657f01e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnityTV.Core.GameManager
+  currentState: 0
+  enableDebugMode: 1
 --- !u!1 &989075790
 GameObject:
   m_ObjectHideFlags: 0
@@ -2053,3 +2146,4 @@ SceneRoots:
   - {fileID: 1786310743}
   - {fileID: 1739007396}
   - {fileID: 861397719}
+  - {fileID: 952664270}
