@@ -274,18 +274,20 @@ namespace UnityTV.Gameplay
 
         private void InteractWithTV()
         {
-            Debug.Log("Player interacts with TV");
+            Debug.Log("[LivingRoom] Player interacts with TV");
 
             // Check if player has unlocked full systems
             if (GameManager.Instance?.PlayerData?.FullSystemsUnlocked == true)
             {
-                // Go to TV interface scene
-                GameManager.Instance.EnterTVMode();
+                Debug.Log("[LivingRoom] Loading TV interface...");
+                // Go to TV interface scene directly
+                SceneController.LoadScene("04_TVInterface");
             }
             else
             {
                 // Show message: need to talk to Anchilo first
                 ShowMessage("请先与访客交谈...");
+                Debug.LogWarning("[LivingRoom] Full systems not unlocked. Talk to Anchilo first!");
             }
         }
 

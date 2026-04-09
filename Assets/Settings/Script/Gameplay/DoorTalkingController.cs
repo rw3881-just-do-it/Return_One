@@ -39,6 +39,7 @@ namespace UnityTV.Gameplay
 
         private void Start()
         {
+            Debug.Log("[DoorTalking] Scene started");
             InitializeUI();
             StartDialogue();
         }
@@ -57,26 +58,38 @@ namespace UnityTV.Gameplay
             // Setup next button
             if (nextButton)
             {
+                nextButton.onClick.RemoveAllListeners();
                 nextButton.onClick.AddListener(DisplayNextLine);
+                Debug.Log("[DoorTalking] Next button configured");
+            }
+            else
+            {
+                Debug.LogError("[DoorTalking] Next button not assigned!");
             }
 
             dialogueQueue = new Queue<DialogueLine>();
+            Debug.Log("[DoorTalking] UI initialized");
         }
 
         private void StartDialogue()
         {
+            Debug.Log("[DoorTalking] Starting dialogue...");
+
             // Check which NPC is visiting
             // For first playthrough, it's always Anchilo
             if (GameManager.Instance?.PlayerData != null &&
                 !GameManager.Instance.PlayerData.AnchiloVisited)
             {
+                Debug.Log("[DoorTalking] Starting Anchilo dialogue (first visit)");
                 StartAnchiloDialogue();
             }
             else
             {
-                // Other NPCs or events can be added here
+                Debug.Log("[DoorTalking] Starting default dialogue");
                 StartDefaultDialogue();
             }
+
+            Debug.Log($"[DoorTalking] Dialogue queue has {dialogueQueue.Count} lines");
         }
 
         private void StartAnchiloDialogue()
@@ -177,17 +190,25 @@ namespace UnityTV.Gameplay
 
         private void DisplayNextLine()
         {
+            // If currently typing, skip to end of current line
             if (isTyping)
             {
-                // Skip to end of current line
                 StopAllCoroutines();
-                dialogueText.text = dialogueQueue.Peek().text;
+
+                // Check if there are still lines in the queue
+                if (dialogueQueue.Count > 0)
+                {
+                    dialogueText.text = dialogueQueue.Peek().text;
+                }
+
                 isTyping = false;
                 return;
             }
 
+            // Check if queue is empty
             if (dialogueQueue.Count == 0)
             {
+                Debug.Log("[DoorTalking] No more dialogue lines");
                 EndDialogue();
                 return;
             }
@@ -226,6 +247,12 @@ namespace UnityTV.Gameplay
             isTyping = true;
             dialogueText.text = "";
 
+            // Disable next button while typing
+            if (nextButton)
+            {
+                nextButton.interactable = false;
+            }
+
             foreach (char letter in text)
             {
                 dialogueText.text += letter;
@@ -233,6 +260,12 @@ namespace UnityTV.Gameplay
             }
 
             isTyping = false;
+
+            // Re-enable next button
+            if (nextButton)
+            {
+                nextButton.interactable = true;
+            }
 
             // Auto advance if enabled
             if (autoAdvance && dialogueQueue.Count > 0)
@@ -265,17 +298,36 @@ namespace UnityTV.Gameplay
         }
 
         // Optional: Allow clicking anywhere to advance
+        private float lastClickTime = 0f;
+        private const float clickCooldown = 0.3f; // Prevent spam clicking
+
         private void Update()
         {
-            if (Input.GetMouseButtonDown(0) && !isTyping)
+            // Mouse click to advance (with cooldown)
+            if (Input.GetMouseButtonDown(0) && Time.time > lastClickTime + clickCooldown)
             {
-                DisplayNextLine();
+                if (!isTyping && dialogueQueue.Count > 0)
+                {
+                    lastClickTime = Time.time;
+                    DisplayNextLine();
+                }
             }
 
             // ESC to skip dialogue (for testing)
             if (Input.GetKeyDown(KeyCode.Escape))
             {
+                Debug.Log("[DoorTalking] ESC pressed - skipping dialogue");
                 EndDialogue();
+            }
+
+            // Space bar to advance (alternative to clicking)
+            if (Input.GetKeyDown(KeyCode.Space) && Time.time > lastClickTime + clickCooldown)
+            {
+                if (!isTyping && dialogueQueue.Count > 0)
+                {
+                    lastClickTime = Time.time;
+                    DisplayNextLine();
+                }
             }
         }
     }

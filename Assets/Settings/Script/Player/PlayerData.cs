@@ -39,7 +39,7 @@ namespace UnityTV.Player
 
         [Header("Unlocked Content")]
         public List<int> UnlockedChannels;
-        public bool Channel6Unlocked = true; // Changed to true for testing
+        public bool Channel6Unlocked = false; // Channel 6 locked - partner's game
 
         [Header("Completed Events")]
         public List<string> CompletedEvents;

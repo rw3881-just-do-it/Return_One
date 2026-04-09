@@ -196,13 +196,22 @@ namespace UnityTV.Gameplay
                 Debug.LogError("[TVInterface] Channel 5 button not assigned!");
             }
 
-            // Channel 6 - Combat (unlocked after Anchilo)
+            // Channel 6 - Combat (LOCKED - partner's game in development)
             if (channel6Button)
             {
                 channel6Button.onClick.RemoveAllListeners();
-                channel6Button.onClick.AddListener(() => SelectChannel(6));
-                channel6Button.interactable = IsChannelUnlocked(6);
-                Debug.Log($"[TVInterface] Channel 6 configured. Unlocked: {IsChannelUnlocked(6)}");
+                channel6Button.onClick.AddListener(() => OnChannel6Clicked());
+                channel6Button.interactable = false; // Always locked
+
+                // Update button text to show it's locked
+                TextMeshProUGUI buttonText = channel6Button.GetComponentInChildren<TextMeshProUGUI>();
+                if (buttonText)
+                {
+                    buttonText.text = "频道 VI\n战斗游戏\n[开发中...]";
+                    buttonText.color = Color.gray;
+                }
+
+                Debug.Log("[TVInterface] Channel 6 configured (LOCKED - in development)");
             }
             else
             {
@@ -212,31 +221,37 @@ namespace UnityTV.Gameplay
             Debug.Log("[TVInterface] All channel buttons setup complete!");
         }
 
+        private void OnChannel6Clicked()
+        {
+            // Show message that it's in development
+            Debug.Log("[TVInterface] Channel 6 is locked - game in development");
+            ShowMessage("此频道正在开发中...");
+        }
+
+        private void ShowMessage(string message)
+        {
+            Debug.Log($"[TVInterface] Message: {message}");
+            // TODO: Show actual UI notification
+        }
+
         private bool IsChannelUnlocked(int channelNumber)
         {
-            // For testing: if no GameManager, unlock all channels
+            // For testing: if no GameManager, unlock all channels except 6
             if (GameManager.Instance?.PlayerData == null)
             {
-                Debug.LogWarning($"[TVInterface] No GameManager/PlayerData - unlocking channel {channelNumber} for testing");
-                return true; // Allow all channels when testing individual scene
-            }
-
-            // Channel 6 is special - unlocked after Anchilo
-            if (channelNumber == 6)
-            {
-                bool unlocked = GameManager.Instance.PlayerData.Channel6Unlocked;
-                Debug.Log($"[TVInterface] Channel 6 unlock status: {unlocked}");
+                bool unlocked = (channelNumber != 6); // All except 6
+                Debug.LogWarning($"[TVInterface] No GameManager/PlayerData - channel {channelNumber} unlocked: {unlocked}");
                 return unlocked;
             }
 
-            // Channel 5 locked in first playthrough
-            if (channelNumber == 5)
+            // Channel 6 is special - locked because it's your partner's game
+            if (channelNumber == 6)
             {
-                // TODO: Check if player completed first playthrough
-                Debug.Log("[TVInterface] Channel 5 locked (first playthrough)");
-                return false;
+                Debug.Log("[TVInterface] Channel 6 is locked (partner's game in development)");
+                return false; // Always locked for now
             }
 
+            // Channels 1-5 are unlocked by default
             bool isUnlocked = GameManager.Instance.PlayerData.UnlockedChannels.Contains(channelNumber);
             Debug.Log($"[TVInterface] Channel {channelNumber} unlock status: {isUnlocked}");
             return isUnlocked;

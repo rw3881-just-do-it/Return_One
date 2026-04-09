@@ -219,13 +219,10 @@ namespace UnityTV.Core
         /// </summary>
         public void EnterTVMode()
         {
-            if (currentState != GameState.LivingRoom)
-            {
-                Debug.LogWarning("Can only watch TV from living room!");
-                return;
-            }
+            Log("Entering TV mode");
 
-            ChangeGameState(GameState.WatchingTV);
+            // Just load the TV scene directly
+            SceneController.LoadScene("04_TVInterface");
         }
 
         /// <summary>
