@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using UnityTV.Core;
 using UnityTV.Player;
+using UnityEngine.UI;
 
 namespace UnityTV.Gameplay
 {
@@ -17,6 +18,15 @@ namespace UnityTV.Gameplay
         [SerializeField] private TextMeshProUGUI attriText;
         [SerializeField] private GameObject tvPrompt; // "按E看电视" 提示
         [SerializeField] private GameObject doorPrompt; // "按E开门" 提示
+
+        [Header("New UI - Bottom Bar")]
+        [SerializeField] private Slider stressBar; // 压力值条形
+        [SerializeField] private Slider idealBar; // 理想值条形
+        [SerializeField] private TextMeshProUGUI stressText; // 压力值文本
+        [SerializeField] private TextMeshProUGUI idealText; // 理想值文本
+        [SerializeField] private Button phoneButton; // 手机按钮
+        [SerializeField] private Button quitButton; // 退出到主菜单按钮
+        [SerializeField] private PhoneController phoneController; // 手机控制器
 
         [Header("Player")]
         [SerializeField] private Transform playerTransform;
@@ -115,6 +125,25 @@ namespace UnityTV.Gameplay
             if (tvPrompt) tvPrompt.SetActive(false);
             if (doorPrompt) doorPrompt.SetActive(false);
             if (doorExclamationMark) doorExclamationMark.SetActive(false);
+
+            // Setup phone button
+            if (phoneButton)
+            {
+                phoneButton.onClick.AddListener(OnPhoneButtonClicked);
+                // Hide phone button until Anchilo visits
+                phoneButton.gameObject.SetActive(GameManager.Instance?.PlayerData?.FullSystemsUnlocked ?? false);
+            }
+
+            // Setup quit button
+            if (quitButton)
+            {
+                quitButton.onClick.AddListener(OnQuitButtonClicked);
+            }
+
+            // Hide stress/ideal bars until unlocked
+            bool systemsUnlocked = GameManager.Instance?.PlayerData?.FullSystemsUnlocked ?? false;
+            if (stressBar) stressBar.gameObject.SetActive(systemsUnlocked);
+            if (idealBar) idealBar.gameObject.SetActive(systemsUnlocked);
 
             // Verify player setup
             if (playerTransform != null)
@@ -224,6 +253,57 @@ namespace UnityTV.Gameplay
             }
 
             Debug.Log("[LivingRoom] Interaction zone setup complete!");
+        }
+
+
+        /// <summary>
+        /// 手机按钮点击
+        /// Phone button clicked
+        /// </summary>
+        private void OnPhoneButtonClicked()
+        {
+            Debug.Log("[LivingRoom] Phone button clicked");
+
+            if (phoneController != null)
+            {
+                phoneController.OpenPhone();
+            }
+            else
+            {
+                Debug.LogError("[LivingRoom] PhoneController not assigned!");
+            }
+        }
+
+        /// <summary>
+        /// 退出按钮点击
+        /// Quit button clicked - return to main menu
+        /// </summary>
+        private void OnQuitButtonClicked()
+        {
+            Debug.Log("[LivingRoom] Quit button clicked");
+
+            // Show confirmation dialog
+            if (GameManager.Instance != null)
+            {
+                // TODO: Show "Are you sure?" dialog
+                GameManager.Instance.ReturnToMainMenu();
+            }
+            else
+            {
+                SceneController.LoadScene("00_MainMenu");
+            }
+        }
+
+        /// <summary>
+        /// Unlock phone and bottom bar after Anchilo visit
+        /// </summary>
+        public void UnlockPhoneSystem()
+        {
+            if (phoneButton) phoneButton.gameObject.SetActive(true);
+            if (stressBar) stressBar.gameObject.SetActive(true);
+            if (idealBar) idealBar.gameObject.SetActive(true);
+
+            Debug.Log("[LivingRoom] Phone system and bars unlocked!");
         }
 
         private void HandleInput()
@@ -339,6 +419,50 @@ namespace UnityTV.Gameplay
                                  $"身体:{data.Stats.PhysicalStrength} " +
                                  $"意志:{data.Stats.MentalStrength}";
             }
+
+            // Update stress bar (only if systems unlocked)
+            if (stressBar && data.FullSystemsUnlocked)
+            {
+                stressBar.maxValue = data.Stats.MaxStress;
+                stressBar.value = data.Stats.Stress;
+
+                if (stressText)
+                {
+                    stressText.text = $"压力: {data.Stats.Stress}/{data.Stats.MaxStress}";
+                }
+
+                // Change color based on stress level
+                Image fillImage = stressBar.fillRect?.GetComponent<Image>();
+                if (fillImage)
+                {
+                    float stressPercent = (float)data.Stats.Stress / data.Stats.MaxStress;
+                    if (stressPercent > 0.7f)
+                        fillImage.color = Color.red; // High stress
+                    else if (stressPercent > 0.4f)
+                        fillImage.color = Color.yellow; // Medium stress
+                    else
+                        fillImage.color = Color.green; // Low stress
+                }
+            }
+
+            // Update ideal bar (only if systems unlocked)
+            if (idealBar && data.FullSystemsUnlocked)
+            {
+                idealBar.maxValue = 100; // Max ideal value
+                idealBar.value = data.Stats.Ideal;
+
+                if (idealText)
+                {
+                    idealText.text = $"理想: {data.Stats.Ideal}/100";
+                }
+
+                // Ideal bar is always positive (blue/cyan color)
+                Image fillImage = idealBar.fillRect?.GetComponent<Image>();
+                if (fillImage)
+                {
+                    fillImage.color = new Color(0.2f, 0.8f, 1f); // Cyan color
+                }
+            }
         }
 
         private void ShowMessage(string message)
@@ -379,6 +503,9 @@ namespace UnityTV.Gameplay
                     break;
             }
         }
+
+
+
     }
 
     /// <summary>
@@ -427,5 +554,8 @@ namespace UnityTV.Gameplay
                 controller?.OnExitInteractionZone(interactionType);
             }
         }
+
+
     }
 }
+

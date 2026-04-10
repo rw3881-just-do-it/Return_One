@@ -277,14 +277,14 @@ namespace UnityTV.Gameplay
 
         private void EndDialogue()
         {
-            Debug.Log("Dialogue ended");
+            Debug.Log("[DoorTalking] Dialogue ended");
 
             // Mark Anchilo as visited and unlock full systems
             if (GameManager.Instance?.PlayerData != null &&
                 !GameManager.Instance.PlayerData.AnchiloVisited)
             {
                 GameManager.Instance.PlayerData.UnlockFullSystems();
-                Debug.Log("Full systems unlocked!");
+                Debug.Log("[DoorTalking] Full systems unlocked!");
             }
 
             // Return to living room after a short delay
@@ -295,6 +295,9 @@ namespace UnityTV.Gameplay
         {
             Debug.Log("[DoorTalking] Returning to Living Room");
             SceneController.LoadScene("02_LivingRoom");
+
+            // Note: Phone system will be automatically shown when Living Room loads
+            // because FullSystemsUnlocked is now true
         }
 
         // Optional: Allow clicking anywhere to advance
