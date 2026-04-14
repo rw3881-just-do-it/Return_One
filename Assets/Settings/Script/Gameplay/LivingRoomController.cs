@@ -19,6 +19,16 @@ namespace UnityTV.Gameplay
         [SerializeField] private GameObject tvPrompt; // "按E看电视" 提示
         [SerializeField] private GameObject doorPrompt; // "按E开门" 提示
 
+        [Header("Horror System")]
+        [SerializeField] private HorrorEventManager horrorEventManager;
+        [SerializeField] private EnvironmentController environmentController;
+        private int tvWatchCountToday = 0;
+        private float idleTimer = 0f;
+        /*
+         * HorrorEventManager horrorEventManager // does not exist
+         * EnvironmentController environmentController //does not exist
+         */
+
         [Header("New UI - Bottom Bar")]
         [SerializeField] private Slider stressBar; // 压力值条形
         [SerializeField] private Slider idealBar; // 理想值条形
@@ -369,6 +379,21 @@ namespace UnityTV.Gameplay
                 ShowMessage("请先与访客交谈...");
                 Debug.LogWarning("[LivingRoom] Full systems not unlocked. Talk to Anchilo first!");
             }
+
+            int currentModel = WorldModelManager.Instance?.CurrentModel ?? 0;
+            // 检测一天看电视次数（负向模型）
+            if (currentModel < 0)
+            {
+                tvWatchCountToday++;
+                if (tvWatchCountToday > 2)
+                {
+                    GameManager.Instance?.PlayerData?.UpdateStats(stress: 10);
+                    Debug.Log($"[Horror] 今天看电视次数过多! 压力+10");
+                }
+            }
+
+            // 继续原有逻辑
+            SceneController.LoadScene("04_TVInterface");
         }
 
         private void InteractWithDoor()
@@ -463,6 +488,25 @@ namespace UnityTV.Gameplay
                     fillImage.color = new Color(0.2f, 0.8f, 1f); // Cyan color
                 }
             }
+            // 模型-3: 检测原地不动
+            if (WorldModelManager.Instance?.CurrentModel == -3)
+            {
+                if (moveInput.magnitude < 0.1f)
+                {
+                    idleTimer += Time.deltaTime;
+                    if (idleTimer >= 2f)
+                    {
+                        // 被攻击
+                        GameManager.Instance?.PlayerData?.UpdateStats(stress: -10, ideal: 10);
+                        idleTimer = 0f;
+                        Debug.Log("[Horror] 被未知实体攻击!");
+                    }
+                }
+                else
+                {
+                    idleTimer = 0f;
+                }
+            }
         }
 
         private void ShowMessage(string message)
@@ -501,6 +545,21 @@ namespace UnityTV.Gameplay
                     isNearDoor = false;
                     if (doorPrompt) doorPrompt.SetActive(false);
                     break;
+            }
+        }
+        public void ShowDoorExclamation()
+        {
+            if (doorExclamationMark != null)
+            {
+                doorExclamationMark.SetActive(true);
+            }
+        }
+
+        public void HideDoorExclamation()
+        {
+            if (doorExclamationMark != null)
+            {
+                doorExclamationMark.SetActive(false);
             }
         }
 

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityTV.Core;
+using System.Collections;  // For IEnumerator
 using UnityTV.Player;
 
 namespace UnityTV.Gameplay
@@ -37,6 +38,10 @@ namespace UnityTV.Gameplay
         private int currentChannel = -1;
         private bool isWatching = false;
         private float watchTimer = 0f;
+        private int channelSwitchCount = 0;
+        private int lastChannel = -1;
+        private int consecutiveWatchCount = 0;
+        private int lastWatchedChannel = -1;
 
         private void Start()
         {
@@ -225,10 +230,10 @@ namespace UnityTV.Gameplay
         {
             // Show message that it's in development
             Debug.Log("[TVInterface] Channel 6 is locked - game in development");
-            ShowMessage("此频道正在开发中...");
+            ShowChannelMessage("此频道正在开发中...");
         }
 
-        private void ShowMessage(string message)
+        private void ShowChannelMessage(string message)
         {
             Debug.Log($"[TVInterface] Message: {message}");
             // TODO: Show actual UI notification
@@ -259,26 +264,112 @@ namespace UnityTV.Gameplay
 
         private void SelectChannel(int channelNumber)
         {
-            Debug.Log($"Selected Channel {channelNumber}");
+            int currentModel = WorldModelManager.Instance?.CurrentModel ?? 0;
 
-            // Check if GameManager exists
-            if (GameManager.Instance == null)
+            // 检测频道1↔6切换（用于卡频道7）
+            if ((lastChannel == 1 && channelNumber == 6) ||
+                (lastChannel == 6 && channelNumber == 1))
             {
-                Debug.LogError("GameManager not found! Cannot access player data.");
+                channelSwitchCount++;
+                Debug.Log($"[TV] 频道1↔6切换次数: {channelSwitchCount}/10");
+
+                if (channelSwitchCount >= 10)
+                {
+                    // 卡入频道7
+                    EnterChannel7();
+                    return;
+                }
+            }
+
+            lastChannel = channelNumber;
+
+            // 检测连续观看同一频道
+            if (channelNumber == lastWatchedChannel)
+            {
+                consecutiveWatchCount++;
+
+                if (consecutiveWatchCount >= 2 && currentModel == 0)
+                {
+                    // 模型0: 连续观看2次 → 画面扭曲
+                    ShowDistortedHorror();
+                    GameManager.Instance?.PlayerData?.UpdateStats(stress: 30, ideal: 20);
+                    WorldModelManager.Instance?.ForceChangeModel(-1);
+                    return;
+                }
+            }
+            else
+            {
+                consecutiveWatchCount = 1;
+                lastWatchedChannel = channelNumber;
+            }
+
+            // 频道2特殊处理
+            if (channelNumber == 2)
+            {
+                HandleChannel2(currentModel);
                 return;
             }
 
-            currentChannel = channelNumber;
+            // 应用频道效果
+            ApplyChannelEffects(channelNumber, currentModel);
+        }
 
-            // Channel 6 is special - goes to combat scene
-            if (channelNumber == 6)
+        private void HandleChannel2(int model)
+        {
+            switch (model)
             {
-                GameManager.Instance.EnterCombat();
-                return;
-            }
+                case 0:
+                    // 正常观看，理想+30压力-20，切换到模型1
+                    ShowWatchingPanel("频道2: 观看电视画面");
+                    GameManager.Instance?.PlayerData?.UpdateStats(ideal: 30, stress: -20);
+                    WorldModelManager.Instance?.ForceChangeModel(1);
+                    break;
 
-            // Start watching other channels
-            StartWatching(channelNumber);
+                case 1:
+                    // 频道2消失，直接跳过
+                    Debug.Log("[TV] 频道2在模型1中消失");
+                    ShowMessage("频道2不可用");
+                    break;
+
+                case 2:
+                    // 多次尝试 → 直接到后天
+                    Debug.Log("[TV] 模型2尝试观看频道2 → 跳到后天");
+                    // TODO: 实现跳天逻辑
+                    break;
+
+                case 3:
+                    // 频道2不存在
+                    ShowMessage("频道2已经不存在了");
+                    break;
+            }
+        }
+
+        private void EnterChannel7()
+        {
+            Debug.Log("[TV] 进入频道7!");
+
+            int model = WorldModelManager.Instance?.CurrentModel ?? 0;
+
+            // 应用频道7效果
+            GameManager.Instance?.PlayerData?.UpdateStats(ideal: 30, stress: 30);
+
+            if (model == 3)
+            {
+                // 模型3: 显示递归场景
+                ShowRecursiveScene();
+            }
+            else if (model == -3)
+            {
+                // 模型-3: 闪退后进入第二天
+                Application.Quit();  // 实际游戏中应该是假闪退
+            }
+            else
+            {
+                // 其他模型: 闪退并随机切换
+                Application.Quit();  // 假闪退
+                int newModel = Random.Range(0, 2) == 0 ? -1 : 1;
+                WorldModelManager.Instance?.ForceChangeModel(newModel);
+            }
         }
 
         private void StartWatching(int channelNumber)
@@ -420,6 +511,165 @@ namespace UnityTV.Gameplay
         private void OnDisable()
         {
             // Clean up
+        }
+
+        /// <summary>
+        /// 显示扭曲画面效果
+        /// </summary>
+        private void ShowDistortedHorror()
+        {
+            Debug.Log("[TVInterface] 显示扭曲画面恐怖效果");
+
+            if (channelInfoText)
+            {
+                channelInfoText.text = "<color=red>画面扭曲...</color>";
+            }
+
+            Invoke(nameof(HideDistortedHorror), 2f);
+        }
+
+        private void HideDistortedHorror()
+        {
+            if (channelInfoText)
+            {
+                channelInfoText.text = "";
+            }
+        }
+
+        /// <summary>
+        /// 应用频道效果（根据模型）
+        /// </summary>
+        private void ApplyChannelEffects(int channelNumber, int currentModel)
+        {
+            Debug.Log($"[TVInterface] 应用频道 {channelNumber} 效果，当前模型 {currentModel}");
+
+            if (GameManager.Instance?.PlayerData == null) return;
+
+            // 根据模型应用不同的理想值增益
+            int idealGain = 0;
+
+            switch (currentModel)
+            {
+                case 0:
+                    idealGain = 10;
+                    break;
+                case 1:
+                    idealGain = 10;
+                    break;
+                case 2:
+                    idealGain = 20;
+                    break;
+                case 3:
+                    idealGain = 30;
+                    break;
+            }
+
+            GameManager.Instance.PlayerData.UpdateStats(ideal: idealGain);
+
+            // 使用新的ChannelEffects系统
+            switch (channelNumber)
+            {
+                case 1:
+                    ChannelEffects.ApplyChannel1(GameManager.Instance.PlayerData);
+                    break;
+                case 3:
+                    ChannelEffects.ApplyChannel3(GameManager.Instance.PlayerData);
+                    break;
+                case 4:
+                    ChannelEffects.ApplyChannel4(GameManager.Instance.PlayerData);
+                    break;
+                case 5:
+                    ChannelEffects.ApplyChannel5(GameManager.Instance.PlayerData);
+                    break;
+            }
+
+            ShowWatchingPanel($"观看频道 {channelNumber}");
+        }
+
+        /// <summary>
+        /// 显示观看面板
+        /// </summary>
+        private void ShowWatchingPanel(string message)
+        {
+            Debug.Log($"[TVInterface] {message}");
+
+            if (channelSelectionPanel)
+            {
+                channelSelectionPanel.SetActive(false);
+            }
+
+            if (watchingPanel)
+            {
+                watchingPanel.SetActive(true);
+            }
+
+            if (channelInfoText)
+            {
+                channelInfoText.text = message;
+            }
+
+            Invoke(nameof(ReturnToChannelSelection), 5f);
+        }
+
+        private void ReturnToChannelSelection()
+        {
+            if (watchingPanel)
+            {
+                watchingPanel.SetActive(false);
+            }
+
+            if (channelSelectionPanel)
+            {
+                channelSelectionPanel.SetActive(true);
+            }
+        }
+
+        /// <summary>
+        /// 显示递归场景（频道7特殊效果）
+        /// </summary>
+        private void ShowRecursiveScene()
+        {
+            Debug.Log("[TVInterface] 显示递归场景（频道7）");
+
+            if (channelInfoText)
+            {
+                channelInfoText.text = "频道7：你看到了自己在玩游戏...\n控制里面的角色关掉电视";
+            }
+
+            StartCoroutine(WaitForRecursiveExit());
+        }
+
+        private System.Collections.IEnumerator WaitForRecursiveExit()
+        {
+            yield return new WaitForSeconds(2f);
+
+            Debug.Log("[TVInterface] 频道7递归场景结束");
+
+            GameManager.Instance?.PlayerData?.UpdateStats(stress: 30, ideal: -10);
+
+            SceneController.LoadScene("02_LivingRoom");
+        }
+
+        /// <summary>
+        /// 显示提示消息
+        /// </summary>
+        private void ShowMessage(string message)
+        {
+            Debug.Log($"[TVInterface] Message: {message}");
+
+            if (channelInfoText)
+            {
+                channelInfoText.text = message;
+                Invoke(nameof(ClearMessage), 3f);
+            }
+        }
+
+        private void ClearMessage()
+        {
+            if (channelInfoText)
+            {
+                channelInfoText.text = "";
+            }
         }
     }
 }

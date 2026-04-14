@@ -35,6 +35,12 @@ namespace UnityTV.Core
 
         private void Awake()
         {
+            // 创建WorldModelManager
+            if (FindObjectOfType<WorldModelManager>() == null)
+            {
+                GameObject wmObj = new GameObject("WorldModelManager");
+                wmObj.AddComponent<WorldModelManager>();
+            }
             // Singleton pattern
             if (Instance != null && Instance != this)
             {

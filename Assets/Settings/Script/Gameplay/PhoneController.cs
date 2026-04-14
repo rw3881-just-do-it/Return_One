@@ -286,36 +286,13 @@ namespace UnityTV.Gameplay
         {
             if (rulesText == null) return;
 
-            rulesText.text = @"<b>归一电视 - 游戏规则</b>
+            // 获取当前模型
+            int currentModel = WorldModelManager.Instance?.CurrentModel ?? 0;
 
-<b>目标：</b>
-在10天内通过提升属性达到你选择的职业要求。
+            // 获取对应模型的规则文本
+            string rulesContent = TVRulesTextManager.GetFormattedRules(currentModel);
 
-<b>频道系统：</b>
-• 频道 I-V：观看节目提升不同属性
-• 频道 VI：战斗游戏（开发中）
-
-<b>属性说明：</b>
-• 智力 - 医生、公司职员需要
-• 身体 - 警察、行商需要
-• 意志 - 所有职业都需要
-• 压力值 - 过高会影响效率
-• 理想值 - 保持希望很重要
-
-<b>时间系统：</b>
-• 每天分为：早晨、下午、傍晚、夜晚
-• 观看频道会推进时间
-• 睡觉进入下一天
-
-<b>商店系统：</b>
-• 购买家具提升属性
-• 家具效果永久生效
-• 合理分配金钱很重要
-
-<b>提示：</b>
-• 注意压力值，及时休息
-• 多和NPC交流获取帮助
-• 规划好每天的行动";
+            rulesText.text = $"<b>归一电视使用规则</b>\n\n{rulesContent}";
         }
 
         public bool IsPhoneOpen => isPhoneOpen;
