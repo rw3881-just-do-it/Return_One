@@ -425,9 +425,8 @@ namespace UnityTV.Gameplay
         private void FinishWatching()
         {
             isWatching = false;
-
-            // Apply stat gains based on channel
-            ApplyStatGains(currentChannel);
+            int currentModel = WorldModelManager.Instance?.CurrentModel ?? 0;
+            ApplyChannelEffects(currentChannel, currentModel);
 
             // Show completion message
             Debug.Log($"Finished watching Channel {currentChannel}");
@@ -445,53 +444,6 @@ namespace UnityTV.Gameplay
             {
                 GameManager.Instance.TimeManager.ForceAdvanceTime();
             }
-        }
-
-        private void ApplyStatGains(int channelNumber)
-        {
-            if (GameManager.Instance?.PlayerData == null) return;
-
-            switch (channelNumber)
-            {
-                case 1: // Medical - Intelligence + Mental Strength
-                    GameManager.Instance.PlayerData.UpdateStats(
-                        intelligence: baseStatGain,
-                        mentalStrength: 3
-                    );
-                    break;
-
-                case 2: // Police - Physical + Mental Strength
-                    GameManager.Instance.PlayerData.UpdateStats(
-                        physicalStrength: baseStatGain,
-                        mentalStrength: baseStatGain
-                    );
-                    break;
-
-                case 3: // Office - Balanced
-                    GameManager.Instance.PlayerData.UpdateStats(
-                        intelligence: 3,
-                        mentalStrength: 3
-                    );
-                    break;
-
-                case 4: // Merchant - Physical + Mental
-                    GameManager.Instance.PlayerData.UpdateStats(
-                        physicalStrength: 3,
-                        mentalStrength: baseStatGain
-                    );
-                    break;
-
-                case 5: // Scientist - High Intelligence
-                    GameManager.Instance.PlayerData.UpdateStats(
-                        intelligence: 8
-                    );
-                    break;
-            }
-
-            // Reduce stress a bit from relaxing
-            GameManager.Instance.PlayerData.UpdateStats(stress: -2);
-
-            Debug.Log("Stats updated after watching channel");
         }
 
         private void ExitTV()

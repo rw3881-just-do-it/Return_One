@@ -352,8 +352,8 @@ namespace UnityTV.Gameplay
                 GameManager.Instance.PlayerData.UpdateStats(
                     intelligence: intelligenceBonus,
                     ideal: idealBonus,
-                    physicalStrength: physicalBonus,
-                    mentalStrength: mentalBonus,
+                    //physicalStrength: physicalBonus,
+                    //mentalStrength: mentalBonus,
                     stress: stressBonus
                 );
 

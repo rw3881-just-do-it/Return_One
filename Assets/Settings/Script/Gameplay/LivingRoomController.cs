@@ -16,6 +16,12 @@ namespace UnityTV.Gameplay
         [SerializeField] private TextMeshProUGUI dayText;
         [SerializeField] private TextMeshProUGUI moneyText;
         [SerializeField] private TextMeshProUGUI attriText;
+        [SerializeField] private TextMeshProUGUI strengthText;
+        [SerializeField] private TextMeshProUGUI intelligenceText;
+        [SerializeField] private TextMeshProUGUI agilityText;
+        [SerializeField] private TextMeshProUGUI perceptionText;
+        [SerializeField] private TextMeshProUGUI dexterityText;
+        [SerializeField] private TextMeshProUGUI courageText;
         [SerializeField] private GameObject tvPrompt; // "按E看电视" 提示
         [SerializeField] private GameObject doorPrompt; // "按E开门" 提示
 
@@ -122,6 +128,26 @@ namespace UnityTV.Gameplay
         {
             HandleInput();
             UpdateUI();
+
+            // 模型-3: 检测原地不动
+            if (WorldModelManager.Instance?.CurrentModel == -3)
+            {
+                if (moveInput.magnitude < 0.1f)
+                {
+                    idleTimer += Time.deltaTime;
+                    if (idleTimer >= 2f)
+                    {
+                        // 被攻击
+                        GameManager.Instance?.PlayerData?.UpdateStats(stress: -10, ideal: 10);
+                        idleTimer = 0f;
+                        Debug.Log("[Horror] 被未知实体攻击!");
+                    }
+                }
+                else
+                {
+                    idleTimer = 0f;
+                }
+            }
         }
 
         private void FixedUpdate()
@@ -424,26 +450,36 @@ namespace UnityTV.Gameplay
 
             PlayerData data = GameManager.Instance.PlayerData;
 
-            // Update day text
+            // Update turn/day text (top left)
             if (dayText)
             {
-                dayText.text = $"第{data.CurrentDay}天";
+                dayText.text = $"回合 {data.Stats.CurrentTurn}/{data.Stats.MaxTurns}";
             }
 
-            // Update money text (placeholder - you can add money system later)
+            // Update score text (top left)
             if (moneyText)
             {
-                moneyText.text = "¥0"; // TODO: Add money system
+                moneyText.text = $"积分: {data.Stats.Score}";
             }
 
-            // Update attributes text
-            if (attriText)
-            {
-                attriText.text = $"体力:{data.Stats.Health} " +
-                                 $"智力:{data.Stats.Intelligence} " +
-                                 $"身体:{data.Stats.PhysicalStrength} " +
-                                 $"意志:{data.Stats.MentalStrength}";
-            }
+            // Update 6 attributes display (top right) - NEW!
+            if (strengthText)
+                strengthText.text = $"力量: {data.Stats.Strength}";
+
+            if (intelligenceText)
+                intelligenceText.text = $"智力: {data.Stats.Intelligence}";
+
+            if (agilityText)
+                agilityText.text = $"敏捷: {data.Stats.Agility}";
+
+            if (perceptionText)
+                perceptionText.text = $"见闻: {data.Stats.Perception}";
+
+            if (dexterityText)
+                dexterityText.text = $"巧手: {data.Stats.Dexterity}";
+
+            if (courageText)
+                courageText.text = $"勇气: {data.Stats.Courage}";
 
             // Update stress bar (only if systems unlocked)
             if (stressBar && data.FullSystemsUnlocked)
@@ -473,12 +509,12 @@ namespace UnityTV.Gameplay
             // Update ideal bar (only if systems unlocked)
             if (idealBar && data.FullSystemsUnlocked)
             {
-                idealBar.maxValue = 100; // Max ideal value
+                idealBar.maxValue = 200; // Max ideal value = 200
                 idealBar.value = data.Stats.Ideal;
 
                 if (idealText)
                 {
-                    idealText.text = $"理想: {data.Stats.Ideal}/100";
+                    idealText.text = $"理想: {data.Stats.Ideal}/200";
                 }
 
                 // Ideal bar is always positive (blue/cyan color)
@@ -486,25 +522,6 @@ namespace UnityTV.Gameplay
                 if (fillImage)
                 {
                     fillImage.color = new Color(0.2f, 0.8f, 1f); // Cyan color
-                }
-            }
-            // 模型-3: 检测原地不动
-            if (WorldModelManager.Instance?.CurrentModel == -3)
-            {
-                if (moveInput.magnitude < 0.1f)
-                {
-                    idleTimer += Time.deltaTime;
-                    if (idleTimer >= 2f)
-                    {
-                        // 被攻击
-                        GameManager.Instance?.PlayerData?.UpdateStats(stress: -10, ideal: 10);
-                        idleTimer = 0f;
-                        Debug.Log("[Horror] 被未知实体攻击!");
-                    }
-                }
-                else
-                {
-                    idleTimer = 0f;
                 }
             }
         }
