@@ -172,9 +172,9 @@ namespace UnityTV.UI
                     options = new string[]
                     {
                         "A.注视",
-                        "B.虫类",
-                        "C.黑暗",
-                        "D.死亡"
+                        "B.言语",
+                        "C.失败",
+                        "D.未来"
                     },
                     optionDescriptions = new string[] { "", "", "", "" },
                     enabledOptions = new bool[] { true, true, true, true },

@@ -45,8 +45,9 @@ namespace UnityTV.Gameplay
 
         [Header("Player")]
         [SerializeField] private Transform playerTransform;
-        [SerializeField] private float moveSpeed = 5f;
+        [SerializeField] private float moveSpeed = 3f;
         [SerializeField] private SpriteRenderer playerSprite;
+        [SerializeField] private Animator playerAnimator;
 
         [Header("Interaction Zones")]
         [SerializeField] private BoxCollider2D tvInteractionZone;
@@ -98,6 +99,7 @@ namespace UnityTV.Gameplay
             }
 
             Debug.Log("[LivingRoom] Scene initialized");
+
             if (backButton != null) {
                 backButton.onClick.AddListener(CloseMessagePanel);
             }
@@ -311,6 +313,11 @@ namespace UnityTV.Gameplay
             // Normalize diagonal movement
             Vector2 movement = moveInput.normalized * moveSpeed * Time.fixedDeltaTime;
             playerTransform.Translate(movement);
+
+            if (playerAnimator != null) { 
+                bool isWalking = moveInput.magnitude > 0;
+                playerAnimator.SetBool("isWalking", isWalking);
+            }
 
             // Flip sprite based on direction
             if (playerSprite != null && moveInput.x != 0)
