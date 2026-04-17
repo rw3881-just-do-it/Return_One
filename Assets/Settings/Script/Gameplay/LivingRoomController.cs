@@ -1,8 +1,8 @@
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 using UnityTV.Core;
 using UnityTV.Player;
-using UnityEngine.UI;
 
 namespace UnityTV.Gameplay
 {
@@ -15,34 +15,33 @@ namespace UnityTV.Gameplay
         [Header("UI References")]
         [SerializeField] private TextMeshProUGUI dayText;
         [SerializeField] private TextMeshProUGUI moneyText;
-        [SerializeField] private TextMeshProUGUI attriText;
-        [SerializeField] private TextMeshProUGUI strengthText;
-        [SerializeField] private TextMeshProUGUI intelligenceText;
-        [SerializeField] private TextMeshProUGUI agilityText;
-        [SerializeField] private TextMeshProUGUI perceptionText;
-        [SerializeField] private TextMeshProUGUI dexterityText;
-        [SerializeField] private TextMeshProUGUI courageText;
+        //[SerializeField] private TextMeshProUGUI attriText;
         [SerializeField] private GameObject tvPrompt; // "按E看电视" 提示
         [SerializeField] private GameObject doorPrompt; // "按E开门" 提示
 
-        [Header("Horror System")]
-        [SerializeField] private HorrorEventManager horrorEventManager;
-        [SerializeField] private EnvironmentController environmentController;
-        private int tvWatchCountToday = 0;
-        private float idleTimer = 0f;
-        /*
-         * HorrorEventManager horrorEventManager // does not exist
-         * EnvironmentController environmentController //does not exist
-         */
-
-        [Header("New UI - Bottom Bar")]
+        [Header("New UI - Bottom Bar (No Phone)")]
         [SerializeField] private Slider stressBar; // 压力值条形
         [SerializeField] private Slider idealBar; // 理想值条形
         [SerializeField] private TextMeshProUGUI stressText; // 压力值文本
         [SerializeField] private TextMeshProUGUI idealText; // 理想值文本
-        [SerializeField] private Button phoneButton; // 手机按钮
+        [SerializeField] private Button rulesButton; // 规则按钮
+        [SerializeField] private Button shopButton; // 商店按钮
+        [SerializeField] private Button messageButton; // 消息按钮
+        [SerializeField] private Button backButton;
         [SerializeField] private Button quitButton; // 退出到主菜单按钮
-        [SerializeField] private PhoneController phoneController; // 手机控制器
+
+        [Header("New UI Panels")]
+        [SerializeField] private GameObject rulesPanel; // 规则面板
+        [SerializeField] private GameObject shopPanel; // 商店面板
+        [SerializeField] private GameObject messagePanel; // 消息面板（访客风格）
+
+        [Header("Top Right - 6 Attributes Display")]
+        [SerializeField] private TextMeshProUGUI strengthText; // 力量
+        [SerializeField] private TextMeshProUGUI intelligenceText; // 智力
+        [SerializeField] private TextMeshProUGUI agilityText; // 敏捷
+        [SerializeField] private TextMeshProUGUI perceptionText; // 见闻
+        [SerializeField] private TextMeshProUGUI dexterityText; // 巧手
+        [SerializeField] private TextMeshProUGUI courageText; // 勇气
 
         [Header("Player")]
         [SerializeField] private Transform playerTransform;
@@ -99,6 +98,9 @@ namespace UnityTV.Gameplay
             }
 
             Debug.Log("[LivingRoom] Scene initialized");
+            if (backButton != null) {
+                backButton.onClick.AddListener(CloseMessagePanel);
+            }
         }
 
         private void DelayedInitialize()
@@ -128,26 +130,6 @@ namespace UnityTV.Gameplay
         {
             HandleInput();
             UpdateUI();
-
-            // 模型-3: 检测原地不动
-            if (WorldModelManager.Instance?.CurrentModel == -3)
-            {
-                if (moveInput.magnitude < 0.1f)
-                {
-                    idleTimer += Time.deltaTime;
-                    if (idleTimer >= 2f)
-                    {
-                        // 被攻击
-                        GameManager.Instance?.PlayerData?.UpdateStats(stress: -10, ideal: 10);
-                        idleTimer = 0f;
-                        Debug.Log("[Horror] 被未知实体攻击!");
-                    }
-                }
-                else
-                {
-                    idleTimer = 0f;
-                }
-            }
         }
 
         private void FixedUpdate()
@@ -162,12 +144,25 @@ namespace UnityTV.Gameplay
             if (doorPrompt) doorPrompt.SetActive(false);
             if (doorExclamationMark) doorExclamationMark.SetActive(false);
 
-            // Setup phone button
-            if (phoneButton)
+            // Setup rules button
+            if (rulesButton)
             {
-                phoneButton.onClick.AddListener(OnPhoneButtonClicked);
-                // Hide phone button until Anchilo visits
-                phoneButton.gameObject.SetActive(GameManager.Instance?.PlayerData?.FullSystemsUnlocked ?? false);
+                rulesButton.onClick.AddListener(OnRulesButtonClicked);
+                rulesButton.gameObject.SetActive(GameManager.Instance?.PlayerData?.FullSystemsUnlocked ?? false);
+            }
+
+            // Setup shop button
+            if (shopButton)
+            {
+                shopButton.onClick.AddListener(OnShopButtonClicked);
+                shopButton.gameObject.SetActive(GameManager.Instance?.PlayerData?.FullSystemsUnlocked ?? false);
+            }
+
+            // Setup message button
+            if (messageButton)
+            {
+                messageButton.onClick.AddListener(OnMessageButtonClicked);
+                messageButton.gameObject.SetActive(GameManager.Instance?.PlayerData?.FullSystemsUnlocked ?? false);
             }
 
             // Setup quit button
@@ -175,6 +170,11 @@ namespace UnityTV.Gameplay
             {
                 quitButton.onClick.AddListener(OnQuitButtonClicked);
             }
+
+            // Hide all panels initially
+            if (rulesPanel) rulesPanel.SetActive(false);
+            if (shopPanel) shopPanel.SetActive(false);
+            if (messagePanel) messagePanel.SetActive(false);
 
             // Hide stress/ideal bars until unlocked
             bool systemsUnlocked = GameManager.Instance?.PlayerData?.FullSystemsUnlocked ?? false;
@@ -291,57 +291,6 @@ namespace UnityTV.Gameplay
             Debug.Log("[LivingRoom] Interaction zone setup complete!");
         }
 
-
-        /// <summary>
-        /// 手机按钮点击
-        /// Phone button clicked
-        /// </summary>
-        private void OnPhoneButtonClicked()
-        {
-            Debug.Log("[LivingRoom] Phone button clicked");
-
-            if (phoneController != null)
-            {
-                phoneController.OpenPhone();
-            }
-            else
-            {
-                Debug.LogError("[LivingRoom] PhoneController not assigned!");
-            }
-        }
-
-        /// <summary>
-        /// 退出按钮点击
-        /// Quit button clicked - return to main menu
-        /// </summary>
-        private void OnQuitButtonClicked()
-        {
-            Debug.Log("[LivingRoom] Quit button clicked");
-
-            // Show confirmation dialog
-            if (GameManager.Instance != null)
-            {
-                // TODO: Show "Are you sure?" dialog
-                GameManager.Instance.ReturnToMainMenu();
-            }
-            else
-            {
-                SceneController.LoadScene("00_MainMenu");
-            }
-        }
-
-        /// <summary>
-        /// Unlock phone and bottom bar after Anchilo visit
-        /// </summary>
-        public void UnlockPhoneSystem()
-        {
-            if (phoneButton) phoneButton.gameObject.SetActive(true);
-            if (stressBar) stressBar.gameObject.SetActive(true);
-            if (idealBar) idealBar.gameObject.SetActive(true);
-
-            Debug.Log("[LivingRoom] Phone system and bars unlocked!");
-        }
-
         private void HandleInput()
         {
             // Movement input (WASD or Arrow Keys)
@@ -405,21 +354,6 @@ namespace UnityTV.Gameplay
                 ShowMessage("请先与访客交谈...");
                 Debug.LogWarning("[LivingRoom] Full systems not unlocked. Talk to Anchilo first!");
             }
-
-            int currentModel = WorldModelManager.Instance?.CurrentModel ?? 0;
-            // 检测一天看电视次数（负向模型）
-            if (currentModel < 0)
-            {
-                tvWatchCountToday++;
-                if (tvWatchCountToday > 2)
-                {
-                    GameManager.Instance?.PlayerData?.UpdateStats(stress: 10);
-                    Debug.Log($"[Horror] 今天看电视次数过多! 压力+10");
-                }
-            }
-
-            // 继续原有逻辑
-            SceneController.LoadScene("04_TVInterface");
         }
 
         private void InteractWithDoor()
@@ -450,7 +384,7 @@ namespace UnityTV.Gameplay
 
             PlayerData data = GameManager.Instance.PlayerData;
 
-            // Update turn/day text (top left)
+            // Update day/turn text (top left)
             if (dayText)
             {
                 dayText.text = $"回合 {data.Stats.CurrentTurn}/{data.Stats.MaxTurns}";
@@ -509,7 +443,7 @@ namespace UnityTV.Gameplay
             // Update ideal bar (only if systems unlocked)
             if (idealBar && data.FullSystemsUnlocked)
             {
-                idealBar.maxValue = 200; // Max ideal value = 200
+                idealBar.maxValue = 200; // Max ideal value
                 idealBar.value = data.Stats.Ideal;
 
                 if (idealText)
@@ -564,6 +498,103 @@ namespace UnityTV.Gameplay
                     break;
             }
         }
+        /// <summary>
+        /// 规则按钮点击
+        /// </summary>
+        private void OnRulesButtonClicked()
+        {
+            Debug.Log("[LivingRoom] Rules button clicked");
+
+            if (rulesPanel != null)
+            {
+                // Close other panels
+                if (shopPanel) shopPanel.SetActive(false);
+                if (messagePanel) messagePanel.SetActive(false);
+
+                // Toggle rules panel
+                rulesPanel.SetActive(!rulesPanel.activeSelf);
+            }
+        }
+
+        /// <summary>
+        /// 商店按钮点击
+        /// </summary>
+        private void OnShopButtonClicked()
+        {
+            Debug.Log("[LivingRoom] Shop button clicked");
+
+            if (shopPanel != null)
+            {
+                // Close other panels
+                if (rulesPanel) rulesPanel.SetActive(false);
+                if (messagePanel) messagePanel.SetActive(false);
+
+                // Toggle shop panel
+                shopPanel.SetActive(!shopPanel.activeSelf);
+            }
+        }
+
+        /// <summary>
+        /// 消息按钮点击
+        /// </summary>
+        private void OnMessageButtonClicked()
+        {
+            Debug.Log("[LivingRoom] Message button clicked");
+
+            if (messagePanel != null)
+            {
+                // Close other panels
+                if (rulesPanel) rulesPanel.SetActive(false);
+                if (shopPanel) shopPanel.SetActive(false);
+
+                // Toggle message panel
+                messagePanel.SetActive(!messagePanel.activeSelf);
+            }
+        }
+        public void CloseMessagePanel() {
+            if (messagePanel != null) { 
+                messagePanel.SetActive(false);
+                Debug.Log("[LivingRoom] Message panel closed via back button.");
+            }
+        }
+
+        /// <summary>
+        /// 退出按钮点击
+        /// Quit button clicked - return to main menu
+        /// </summary>
+        private void OnQuitButtonClicked()
+        {
+            Debug.Log("[LivingRoom] Quit button clicked");
+
+            // Show confirmation dialog
+            if (GameManager.Instance != null)
+            {
+                // TODO: Show "Are you sure?" dialog
+                GameManager.Instance.ReturnToMainMenu();
+            }
+            else
+            {
+                SceneController.LoadScene("00_MainMenu");
+            }
+        }
+
+        /// <summary>
+        /// Unlock bottom bar buttons after Anchilo visit
+        /// </summary>
+        public void UnlockBottomButtons()
+        {
+            if (rulesButton) rulesButton.gameObject.SetActive(true);
+            if (shopButton) shopButton.gameObject.SetActive(true);
+            if (messageButton) messageButton.gameObject.SetActive(true);
+            if (stressBar) stressBar.gameObject.SetActive(true);
+            if (idealBar) idealBar.gameObject.SetActive(true);
+
+            Debug.Log("[LivingRoom] Bottom buttons and bars unlocked!");
+        }
+
+        /// <summary>
+        /// 显示门口的感叹号（敲门声触发时）
+        /// </summary>
         public void ShowDoorExclamation()
         {
             if (doorExclamationMark != null)
@@ -572,6 +603,9 @@ namespace UnityTV.Gameplay
             }
         }
 
+        /// <summary>
+        /// 隐藏门口的感叹号
+        /// </summary>
         public void HideDoorExclamation()
         {
             if (doorExclamationMark != null)
@@ -579,10 +613,9 @@ namespace UnityTV.Gameplay
                 doorExclamationMark.SetActive(false);
             }
         }
+    } // ← LivingRoomController 类在这里结束
 
-
-
-    }
+    //end of LivingRoomController
 
     /// <summary>
     /// 交互区域类型
@@ -630,8 +663,5 @@ namespace UnityTV.Gameplay
                 controller?.OnExitInteractionZone(interactionType);
             }
         }
-
-
     }
 }
-
